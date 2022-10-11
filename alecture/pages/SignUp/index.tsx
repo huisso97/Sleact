@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { Button, Error, Form, Header, Input, Label, LinkContainer, Success } from '@pages/SignUp/styles';
 import { useInput } from '@hooks/useInput';
+import axios from 'axios';
 
 const SignUp = () => {
   const [signUpError, setSignUpError] = useState(false);
@@ -11,22 +12,42 @@ const SignUp = () => {
   const [password, , setPassword] = useInput('');
   const [passwordCheck, , setPasswordCheck] = useInput('');
 
-  // const onChangePassword = useCallback(
-  //   (e) => {
-  //     setPassword(e.target.value);
-  //     setMismatchError(passwordCheck !== e.target.value);
-  //   },
-  //   [passwordCheck, setPassword],
-  // );
+  const onChangePassword = useCallback(
+    (e) => {
+      setPassword(e.target.value);
+      setMismatchError(passwordCheck !== e.target.value);
+    },
+    [passwordCheck, setPassword],
+  );
 
-  // const onChangePasswordCheck = useCallback(
-  //   (e) => {
-  //     setPasswordCheck(e.target.value);
-  //     setMismatchError(password !== e.target.value);
-  //   },
-  //   [password, setPasswordCheck],
-  // );
+  const onChangePasswordCheck = useCallback(
+    (e) => {
+      setPasswordCheck(e.target.value);
+      setMismatchError(password !== e.target.value);
+    },
+    [password, setPasswordCheck],
+  );
 
+  const onSubmit = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (!mismatchError && nickname) {
+        axios
+          .post('https://localhost:3095/api/users', {
+            email,
+            nickname,
+            password,
+          })
+          .then((res) => {
+            setSignUpSuccess(true);
+          })
+          .catch((error) => {
+            setSignUpError(error.response.data);
+          });
+      }
+    },
+    [email, nickname, password, mismatchError],
+  );
   return (
     <div id="container">
       <Header>Sleact</Header>

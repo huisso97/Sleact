@@ -195,9 +195,85 @@ if (!isDevelopment && config.plugins) {
 export default config;
 ```
 
-### 4. index.html 생성
+### 5. index.html 생성
 
 - webpack에서 `CSS`와`JS`를 처리했으니, index.html로 `HTML`을 처리한다.
 
 - id가 "app"인 태그에 jsx로 만든 태그들이 들어간다.
 - 즉, ` <script src="/dist/app.js"></script>` 가 ` <div id="app"></div>` 을 채워넣는다.
+
+## 로그인, 회원가입 만들기
+
+### 1. 커스텀 훅 만들기
+
+### 2. axios로 요청 보내기와 CORS, proxy
+
+```typescript
+// pages/SignUp/index.tsx
+
+...
+const onSubmit = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (!mismatchError && nickname) {
+        console.log('서버로 회원가입하기');
+        // 비동기 로직에서 setState 등 값을 바꾸려고 할 때, 무조건
+        // 해당 함수를 초기화하고 값을 갱신해라
+        // 그렇지 않으면, 2회 이상 연속 비동기 요청 보내는 상황 등이
+        // 왔을 때, 1번째 요청때 담아놨던 결과가 2번째 요청때 그대로
+        // 담겨있는 현상이 생기기 때문
+        // 즉 요청 보내기 이전의 결과가 담아있을 수 있기 때문에
+        // 초기화 후, 요청을 받아오자
+        axios
+          // proxy를 설정했기 때문에 앞의 호스트명과 포트번호를 안적어도됨
+          .post('api/users', {
+            email,
+            nickname,
+            password,
+          })
+          .then((res) => {
+            setSignUpSuccess(true);
+          })
+          .catch((error) => {
+            setSignUpError(error.response.data);
+          });
+      }
+    },
+    [email, nickname, password, mismatchError],
+  );
+...
+```
+
+
+
+### 3. swr 사용하기(쿠키 공유하기)
+
+swr은 다른 탭에 갔다가 오면, API에 재요청을 보내 데이터를 갱신한다.
+
+#### 쿠키
+
+- 프론트엔드와 백엔드 서버가 다르면 백엔드에서 프론트엔드로 쿠키를 생성해줄 수 없고, 프론트엔드에서 백엔드로 쿠키를 보내줄 수 없다.
+- 이를 위해 **withCredentials : true** 를 설정한다.
+- GET요청에서는 2번째 자리, POST요청에서는 3번째 자리에 설정한다.
+
+## 에러 처리
+
+```bash
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1361:8)
+    at processTicksAndRejections 
+(node:internal/process/task_queues:83:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3095
+}
+[nodemon] app crashed - waiting for file changes before starting..
+```
+
+실수로 npm install을 했었던 상황에서 yarn start를 한 이유인지, 다음과 같은 에러 충돌이 발생하였다.
+
+1. node modules 삭제 -> 실패
+2. 알고보니, MYSQL CONNECTION이 끊어져 있었음
+   - MYSQL을 지우고, 새로 DB를 생성함 (해결 완료)
