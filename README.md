@@ -202,6 +202,8 @@ export default config;
 - id가 "app"인 태그에 jsx로 만든 태그들이 들어간다.
 - 즉, ` <script src="/dist/app.js"></script>` 가 ` <div id="app"></div>` 을 채워넣는다.
 
+---
+
 ## 로그인, 회원가입 만들기
 
 ### 1. 커스텀 훅 만들기
@@ -244,9 +246,7 @@ const onSubmit = useCallback(
 ...
 ```
 
-
-
-### 3. swr 사용하기(쿠키 공유하기)
+### 3. swr 사용하기(+쿠키 공유하기)
 
 swr은 다른 탭에 갔다가 오면, API에 재요청을 보내 데이터를 갱신한다.
 
@@ -256,12 +256,43 @@ swr은 다른 탭에 갔다가 오면, API에 재요청을 보내 데이터를 �
 - 이를 위해 **withCredentials : true** 를 설정하여 백엔드에서 쿠키를 생성하여 프론트엔드가 쿠키를 받아 백엔드에 주고 인증을 받는다.
 - GET요청에서는 2번째 자리, POST요청에서는 3번째 자리에 설정한다.
 
+#### 왜 변수 사용을 let이 아닌 useState로 할까?
+
+- let으로 변수를 선언 후, 특정 조건에서 값을 바꾸는 로직을 작성한다고 가정해보자
+- 그러나 다른 렌더링을 유발하는 이벤트로 인해, 해당 컴포넌트가 다시 실행되고, 이에 따라 변수가 다시 선언되어 true가 되기 때문에 useState를 쓴다.
+
+```javascript
+...
+let value = true;
+
+const onChange = (e) => {
+  // 이렇게 값을 바꾸어도 리렌더링 됐을 때, value는 true 다시 바뀜
+  value = false;
+}
+
+return (
+  <div>
+  <input onChange={onChange} value={name}/>
+  </div>
+)
+```
+
+#### swr revalidate
+
+swr이 제공하는 기능 중, **revalidate**라는 기능이 있다.
+
+**revalidate**는 주기적으로 서버에 호출하는 기능이며, **dedupingInterval** 기간 내에는 캐시에서 데이터를 불러온다.
+
+---
+
 ## 에러 처리
+
+### MYSQL 관련 에러
 
 ```bash
 Emitted 'error' event on Server instance at:
     at emitErrorNT (node:net:1361:8)
-    at processTicksAndRejections 
+    at processTicksAndRejections
 (node:internal/process/task_queues:83:21) {
   code: 'EADDRINUSE',
   errno: -4091,
@@ -277,3 +308,9 @@ Emitted 'error' event on Server instance at:
 1. node modules 삭제 -> 실패
 2. 알고보니, MYSQL CONNECTION이 끊어져 있었음
    - MYSQL을 지우고, 새로 DB를 생성함 (해결 완료)
+
+### 회원가입 입력 제출 후, 만난 에러
+
+```
+react_devtools_backend.js:4026 Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7Bsuccess%2C%20code%2C%20data%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+```
