@@ -2,22 +2,27 @@ import React, { useCallback, useState } from 'react';
 import { Button, Error, Form, Header, Input, Label, LinkContainer, Success } from '@pages/SignUp/styles';
 import { useInput } from '@hooks/useInput';
 import axios from 'axios';
+import fetcher from '@utils/fetcher';
+import useSWR from 'swr';
+import { Redirect } from 'react-router-dom';
 
 const SignUp = () => {
-  const [signUpError, setSignUpError] = useState(false);
-  const [signUpSuccess, setSignUpSuccess] = useState(false);
-  const [mismatchError, setMismatchError] = useState(false);
+  const { data, error } = useSWR('http://localhost:3095/api/users', fetcher);
+
   const [email, onChangeEmail] = useInput('');
   const [nickname, onChangeNickname] = useInput('');
   const [password, , setPassword] = useInput('');
   const [passwordCheck, , setPasswordCheck] = useInput('');
+  const [mismatchError, setMismatchError] = useState(false);
+  const [signUpError, setSignUpError] = useState('');
+  const [signUpSuccess, setSignUpSuccess] = useState(false);
 
   const onChangePassword = useCallback(
     (e) => {
       setPassword(e.target.value);
       setMismatchError(passwordCheck !== e.target.value);
     },
-    [passwordCheck, setPassword],
+    [passwordCheck],
   );
 
   const onChangePasswordCheck = useCallback(
@@ -25,15 +30,18 @@ const SignUp = () => {
       setPasswordCheck(e.target.value);
       setMismatchError(password !== e.target.value);
     },
-    [password, setPasswordCheck],
+    [password],
   );
 
   const onSubmit = useCallback(
     (e) => {
       e.preventDefault();
       if (!mismatchError && nickname) {
+        console.log('서버로 회원가입하기');
+        setSignUpError('');
+        setSignUpSuccess(false);
         axios
-          .post('https://localhost:3095/api/users', {
+          .post('http://localhost:3095/api/users', {
             email,
             nickname,
             password,
@@ -46,8 +54,15 @@ const SignUp = () => {
           });
       }
     },
-    [email, nickname, password, mismatchError],
+    [email, nickname, password, passwordCheck, mismatchError],
   );
+  if (data === undefined) {
+    return <div>로딩중</div>;
+  }
+
+  if (data) {
+    return <Redirect to="/workspace/channel" />;
+  }
   return (
     <div id="container">
       <Header>Sleact</Header>

@@ -99,12 +99,12 @@ const config: Configuration = {
     // 클라이언트 주소를 3095로 속여서 송수신 하는 것
     // 그러나 실서버와 로컬 간의 통신은 불가함
     // 로컬호스트끼리 가능
-    proxy: {
-      '/api/': {
-        target: 'http://localhost:3095',
-        changeOrigin: true,
-      },
-    },
+    // proxy: {
+    //   '/api/': {
+    //     target: 'http://localhost:3095',
+    //     changeOrigin: true,
+    //   },
+    // },
   },
 };
 
