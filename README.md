@@ -309,8 +309,29 @@ Emitted 'error' event on Server instance at:
 2. 알고보니, MYSQL CONNECTION이 끊어져 있었음
    - MYSQL을 지우고, 새로 DB를 생성함 (해결 완료)
 
-### 회원가입 입력 제출 후, 만난 에러
+### 회원가입 관련 요청이 다른 API로 보내지는 현상
 
 ```
-react_devtools_backend.js:4026 Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7Bsuccess%2C%20code%2C%20data%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+api/users로 요청이 보내져야하는데, 계속 https://sleact.nodebird.com/api/user 로 요청이 보내져 404 에러가 반환되는 현상이 발생했다.
+에러 사진은 하단과 같다.
 ```
+
+![image-20221016171618923](README.assets/image-20221016171618923.png)
+
+- 확인한 방법들은 다음과 같다.
+
+  - api url 을 확인하다 => 옳게 작성하였다.
+
+  - package-lock.json 과 node_modules를 프론트 및 백엔드 폴더에서 삭제 후, 재설치를 시도해았다.
+
+  - backend 및 frontend 재초기 세팅
+  
+    - 여기서 db 연결 후,`npx sequelize db:seed:all` 를 했을 때,  다음과 같은 에러가 발생했다.
+  
+      - 유추한건데, 마이그레이션 과정에서 에러가 발생한 것으로 판단하여 MYSQL workspace를 삭제 및 다시 세팅하였으나, 해결되지 않았다.
+  
+      ```bash
+      Loaded configuration file "config\config.js". Using environment "development". == 20201019065847-sleact: migrating ======= ERROR: Validation error
+      ```
+  
+      - 결국, config.js에서 DB이름을 sleact -> sleact2로 변경후, 다시 create && sequelize 명령을 통해 세팅을 마쳤다.

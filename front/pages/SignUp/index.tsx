@@ -7,7 +7,7 @@ import useSWR from 'swr';
 import { Redirect } from 'react-router-dom';
 
 const SignUp = () => {
-  const { data, error } = useSWR('http://localhost:3095/api/users/df', fetcher);
+  const { data, error } = useSWR('http://localhost:3095/api/users', fetcher);
   console.log(data);
   const [email, onChangeEmail] = useInput('');
   const [nickname, onChangeNickname] = useInput('');
@@ -56,12 +56,9 @@ const SignUp = () => {
     },
     [email, nickname, password, passwordCheck, mismatchError],
   );
-  if (data === undefined) {
-    return <div>로딩중</div>;
-  }
 
   if (data) {
-    // return <Redirect to="/workspace/channel" />;
+    return <Redirect to="/workspace/channel" />;
   }
   return (
     <div id="container">
