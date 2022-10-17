@@ -283,6 +283,69 @@ swr이 제공하는 기능 중, **revalidate**라는 기능이 있다.
 
 **revalidate**는 주기적으로 서버에 호출하는 기능이며, **dedupingInterval** 기간 내에는 캐시에서 데이터를 불러온다.
 
+### 4. 워크스페이스 만들기 + 로그아웃하기
+
+#### return문의 위치는?
+
+Login과 Signup page에서 유저 데이터가 있을 때, workspace로 Redirect를 한다.
+
+이 과정에서, 아래 코드와 같이 return 문을 활용하여 Redirect 시키는데, 항상 리턴문은 hook 밑에서 실행시켜야한다.
+
+```typescript
+// 상단에 모든 hook들이 있습니다.
+... 
+
+  if (data) {
+    return <Redirect to="/workspace/channel" />;
+  }
+... 
+```
+
+### 5. SWR 활용하기
+
+#### mutate
+
+swr에서 optimistic UI를 위해 **mutate**라는 메서드를 제공한다.
+
+처음에는 서버 요청없이 데이터가 동작하다가 나중에 서버에 데이터 요청을 하여 검사를 한다. 요청 과정에 에러가 있으면 취소하는 메커니즘을 통해, 사용자에게 더욱 긍정적인 UI를 제공하게 된다.
+
+예를 들어, 인스타그램에서 좋아요를 눌렀을 때, 우선 클라이언트에서 좋아요를 눌러서 색상이 변경되는 등 서버에 요청 없이 데이터를 변경한다. 그 후, mutate의 revalidate 속성이 true일 때, 서버에 확인 요청을 보내어 요청에 에러가 있을 시, 좋아요 하트를 취소하도록 작동한다. 
+
+```typescript
+...
+// 여기서의 mutate는 해당 키를 가진 swr에서의 mutate이기 때문에, 하단의 mutate 코드 작성 시, 키는 따로 작성하지 않아도 된다.
+// mutate의 첫번째 인자는 데이터이고, 두번째 인자는 shouldrevalidate로 true일 시, 서버에 요청을 보내어 확인한다.
+const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher);       
+...
+.then((response) => {
+          mutate(response.data, false);
+        })
+...
+```
+
+#### dedupingInterval
+
+```typescript
+// dedupingInterval -> 지정한 시간 동안은 해당 api 요청을 수십번 해도 해당 시간동안은 한 번 밖에 안한다.
+const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher, {dedupingInterval:100000});
+```
+
+#### 전역 상태 관리자로서의 swr
+
+swr은 비동기 요청뿐만 아니라, 전역 상태 관리 역할도 할 수 있다.
+
+A컴포넌트에서 데이터를 localstorage에 저장한 후, B컴포넌트에서 localstorage로 데이터를 가져올 수 있다. 
+
+```typescript
+// A.tsx
+const {data} = useSWR('hello', (key) => {localstorage.setItem('data', key); return localstorage.getItem(key)});
+
+// B.tsx
+const {data} = useSWR('hello')
+```
+
+
+
 ---
 
 ## 에러 처리
@@ -316,22 +379,26 @@ api/users로 요청이 보내져야하는데, 계속 https://sleact.nodebird.com
 에러 사진은 하단과 같다.
 ```
 
+**최종적인 발생 원인은 baseURL 지정 코드에 문제가 있었던 것으로 확인이 되었다.**
+
 ![image-20221016171618923](README.assets/image-20221016171618923.png)
 
-- 확인한 방법들은 다음과 같다.
+- 시도한 방법들은 다음과 같다.
 
-  - api url 을 확인하다 => 옳게 작성하였다.
+  1. api url 을 확인하다 => 옳게 작성하였다.
 
-  - package-lock.json 과 node_modules를 프론트 및 백엔드 폴더에서 삭제 후, 재설치를 시도해았다.
+  2. package-lock.json 과 node_modules를 프론트 및 백엔드 폴더에서 삭제 후, 재설치를 시도해았다.
 
-  - backend 및 frontend 재초기 세팅
-  
-    - 여기서 db 연결 후,`npx sequelize db:seed:all` 를 했을 때,  다음과 같은 에러가 발생했다.
-  
-      - 유추한건데, 마이그레이션 과정에서 에러가 발생한 것으로 판단하여 MYSQL workspace를 삭제 및 다시 세팅하였으나, 해결되지 않았다.
-  
-      ```bash
-      Loaded configuration file "config\config.js". Using environment "development". == 20201019065847-sleact: migrating ======= ERROR: Validation error
-      ```
-  
-      - 결국, config.js에서 DB이름을 sleact -> sleact2로 변경후, 다시 create && sequelize 명령을 통해 세팅을 마쳤다.
+  3. backend 및 frontend 재초기 세팅
+
+     - 여기서 db 연결 후,`npx sequelize db:seed:all` 를 했을 때,  다음과 같은 에러가 발생했다.
+
+       - 유추한건데, 마이그레이션 과정에서 에러가 발생한 것으로 판단하여 MYSQL workspace를 삭제 및 다시 세팅하였으나, 해결되지 않았다.
+
+       ```bash
+       Loaded configuration file "config\config.js". Using environment "development". == 20201019065847-sleact: migrating ======= ERROR: Validation error
+       ```
+
+       - 결국, config.js에서 DB이름을 sleact -> sleact2로 변경후, 다시 create && sequelize 명령을 통해 세팅을 마쳤다.
+       - 재세팅한 코드와 기존 코드의 차이점을 찾아보니, baseURL을 설정하는 코드의 유무였다. 
+       - 이번을 계기로 api 요청 에러 관련 디버깅 시, URL 세팅 구간부터 차근차근 확인해야겠다 깨닫게 되었다.

@@ -5,14 +5,16 @@ import { Redirect } from 'react-router-dom';
 import useSWR from 'swr';
 
 const Workspace: FC = ({ children }) => {
-  const { data, error } = useSWR('http://localhost:3095/api/users', fetcher);
+  const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher);
 
   const onLogout = useCallback(() => {
     axios
       .post('http://localhost:3095/api/users/logout', null, {
         withCredentials: true,
       })
-      .then(() => {});
+      .then((res) => {
+        mutate(false, false);
+      });
   }, []);
 
   if (!data) {

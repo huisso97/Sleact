@@ -7,7 +7,7 @@ import useSWR from 'swr';
 import { Redirect } from 'react-router-dom';
 
 const SignUp = () => {
-  const { data, error } = useSWR('http://localhost:3095/api/users', fetcher);
+  const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher);
   console.log(data);
   const [email, onChangeEmail] = useInput('');
   const [nickname, onChangeNickname] = useInput('');
@@ -48,6 +48,7 @@ const SignUp = () => {
           })
           .then((res) => {
             setSignUpSuccess(true);
+            mutate(res.data, false);
           })
           .catch((error) => {
             setSignUpError(error.response.data);
