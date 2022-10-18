@@ -1,4 +1,5 @@
 // import useInput from '@hooks/useInput';
+import { useInput } from '@hooks/useInput';
 import { Success, Form, Error, Label, Input, LinkContainer, Button, Header } from '@pages/SignUp/styles';
 import fetcher from '@utils/fetcher';
 import axios from 'axios';
@@ -12,8 +13,8 @@ const LogIn = () => {
   const [logInError, setLogInError] = useState(false);
   // const [email, onChangeEmail] = useInput('');
   // const [password, onChangePassword] = useInput('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useInput('');
+  const [password, setPassword] = useInput('');
   const onSubmit = useCallback(
     (e) => {
       e.preventDefault();
@@ -34,9 +35,9 @@ const LogIn = () => {
     [email, password],
   );
 
-  if (data === undefined) {
-    return <div>로딩중...</div>;
-  }
+  // if (data === undefined) {
+  //   return <div>로딩중...</div>;
+  // }
 
   if (data) {
     return <Redirect to="/workspace/channel" />;
