@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const fetcher = (url: string) => {
   console.log(url);
-  axios
+  return axios
     .get(url, {
       withCredentials: true,
     })

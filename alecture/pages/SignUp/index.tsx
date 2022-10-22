@@ -7,7 +7,7 @@ import useSWR from 'swr';
 import { Redirect } from 'react-router-dom';
 
 const SignUp = () => {
-  const { data, error } = useSWR('http://localhost:3095/api/users/df', fetcher);
+  const { data, error } = useSWR('http://localhost:3095/api/users', fetcher);
   console.log(data);
   const [email, onChangeEmail] = useInput('');
   const [nickname, onChangeNickname] = useInput('');
@@ -48,6 +48,7 @@ const SignUp = () => {
           })
           .then((res) => {
             setSignUpSuccess(true);
+            return <Redirect to="/workspace/channel" />;
           })
           .catch((error) => {
             setSignUpError(error.response.data);
@@ -61,6 +62,7 @@ const SignUp = () => {
   // }
 
   if (data) {
+    console.log('회원가입 성공');
     return <Redirect to="/workspace/channel" />;
   }
   return (
