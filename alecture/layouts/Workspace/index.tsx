@@ -5,22 +5,26 @@ import {
   Header,
   MenuScroll,
   ProfileImg,
+  ProfileModal,
   RightMenu,
   WorkspaceName,
   Workspaces,
   WorkspaceWrapper,
 } from '@layouts/Workspace/styles';
 import axios from 'axios';
-import React, { Children, FC, useCallback } from 'react';
+import React, { Children, FC, useCallback, useState } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import useSWR from 'swr';
 import gravatar from 'gravatar';
 import loadable from '@loadable/component';
+import Menu from '@components/Menu';
 
 const Channel = loadable(() => import('@pages/Channel'));
 const DirectMessage = loadable(() => import('@pages/DirectMessage'));
 
 const Workspace: FC = ({ children }) => {
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
   const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher, {
     dedupingInterval: 2000, // 2초
   });
@@ -36,6 +40,14 @@ const Workspace: FC = ({ children }) => {
       });
   }, []);
 
+  const onCloseUserProfile = useCallback((e) => {
+    e.stopPropagation();
+    setShowUserMenu(false);
+  }, []);
+  const onClickUserProfile = useCallback(() => {
+    setShowUserMenu((prev) => !prev);
+  }, []);
+
   if (!data) {
     return <Redirect to="/login" />;
   }
@@ -44,8 +56,19 @@ const Workspace: FC = ({ children }) => {
     <div>
       <Header>
         <RightMenu>
-          <span>
+          <span onClick={onClickUserProfile}>
             <ProfileImg src={gravatar.url(data.nickname, { s: '28px', d: 'retro' })} alt={data.nickname} />
+            {showUserMenu && (
+              <Menu style={{ right: 0, top: 38 }} show={showUserMenu} onCloseModal={onCloseUserProfile}>
+                <ProfileModal>
+                  <img src={gravatar.url(data.nickname, { s: '38px', d: 'retro' })} alt={data.nickname} />
+                  <div>
+                    <span id="profile-name">{data.nickname}</span>
+                    <span id="profile-active">Active</span>
+                  </div>
+                </ProfileModal>
+              </Menu>
+            )}
           </span>
         </RightMenu>
       </Header>
