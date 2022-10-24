@@ -293,12 +293,12 @@ Login과 Signup page에서 유저 데이터가 있을 때, workspace로 Redirect
 
 ```typescript
 // 상단에 모든 hook들이 있습니다.
-... 
+...
 
   if (data) {
     return <Redirect to="/workspace/channel" />;
   }
-... 
+...
 ```
 
 ### 5. SWR 활용하기
@@ -309,13 +309,13 @@ swr에서 optimistic UI를 위해 **mutate**라는 메서드를 제공한다.
 
 처음에는 서버 요청없이 데이터가 동작하다가 나중에 서버에 데이터 요청을 하여 검사를 한다. 요청 과정에 에러가 있으면 취소하는 메커니즘을 통해, 사용자에게 더욱 긍정적인 UI를 제공하게 된다.
 
-예를 들어, 인스타그램에서 좋아요를 눌렀을 때, 우선 클라이언트에서 좋아요를 눌러서 색상이 변경되는 등 서버에 요청 없이 데이터를 변경한다. 그 후, mutate의 revalidate 속성이 true일 때, 서버에 확인 요청을 보내어 요청에 에러가 있을 시, 좋아요 하트를 취소하도록 작동한다. 
+예를 들어, 인스타그램에서 좋아요를 눌렀을 때, 우선 클라이언트에서 좋아요를 눌러서 색상이 변경되는 등 서버에 요청 없이 데이터를 변경한다. 그 후, mutate의 revalidate 속성이 true일 때, 서버에 확인 요청을 보내어 요청에 에러가 있을 시, 좋아요 하트를 취소하도록 작동한다.
 
 ```typescript
 ...
 // 여기서의 mutate는 해당 키를 가진 swr에서의 mutate이기 때문에, 하단의 mutate 코드 작성 시, 키는 따로 작성하지 않아도 된다.
 // mutate의 첫번째 인자는 데이터이고, 두번째 인자는 shouldrevalidate로 true일 시, 서버에 요청을 보내어 확인한다.
-const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher);       
+const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher);
 ...
 .then((response) => {
           mutate(response.data, false);
@@ -327,26 +327,86 @@ const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetche
 
 ```typescript
 // dedupingInterval -> 지정한 시간 동안은 해당 api 요청을 수십번 해도 해당 시간동안은 한 번 밖에 안한다.
-const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher, {dedupingInterval:100000});
+const { data, error, mutate } = useSWR("http://localhost:3095/api/users", fetcher, { dedupingInterval: 100000 });
 ```
 
 #### 전역 상태 관리자로서의 swr
 
 swr은 비동기 요청뿐만 아니라, 전역 상태 관리 역할도 할 수 있다.
 
-A컴포넌트에서 데이터를 localstorage에 저장한 후, B컴포넌트에서 localstorage로 데이터를 가져올 수 있다. 
+A컴포넌트에서 데이터를 localstorage에 저장한 후, B컴포넌트에서 localstorage로 데이터를 가져올 수 있다.
 
 ```typescript
 // A.tsx
-const {data} = useSWR('hello', (key) => {localstorage.setItem('data', key); return localstorage.getItem(key)});
+const { data } = useSWR("hello", (key) => {
+  localstorage.setItem("data", key);
+  return localstorage.getItem(key);
+});
 
 // B.tsx
-const {data} = useSWR('hello')
+const { data } = useSWR("hello");
 ```
 
-
-
 ---
+
+## 메뉴와 모달 만들기
+
+### 1. 메뉴 모달, 채널 모달
+
+#### 모달의 input이 많아 다른 컴포넌트들에 대한 리렌더링이 빈번히 일어나는 경우, 컴포넌트를 분리하여 유지보수성과 재사용성을 높이자!
+
+-> `CreateChannelModal`,`inviteWorkspaceModal` 참고
+
+#### Invalid hook call ~ 에러
+
+- 위의 에러는 return 함수 하단 혹은 if문/반복문/return문 안에 hook을 사용했을 때 발생하는 에러이다.
+
+### 2. 라우터 주소 설계
+
+- 라우트 파라미터로 값을 여러 형태로 바꿀 수 있다.
+- 그러나 파라미터가 아닌 값과 함께 쓴다면, 파라미터가 아닌 라우터 먼저 작성 후, 파라미터 경로로 된 라우터를 작성해야 한다.
+- 이는 파라미터 경로가 먼저 선언되었을 때, 파라미터가 아닌 경로도 파라미터 경로로 걸쳐지기 때문이다.
+
+```javascript
+// 파라미터가 아닌 경로 먼저 작성
+<Route path="workspace/workspace" />
+<Route path="/workspace/:workpspace"/>
+```
+
+## DM 보내기
+
+### 1. DM 목록 만들기
+
+#### NavLink
+
+- Link와 같이 `to` 속성을 사용하여 이동시키는 태그이다.
+- 차이점은 `activeClassName`라는 속성을 통해, 지금 주소와 NavLink의 주소가 같으면, 해당 속성에 대한 className을 부여할 수 있다.
+- Sleact에서는 DMList에서 유저 리스트 하이라이트 기능에 구현되어있다.
+
+### 2. 재사용에 따른 props 받기
+
+#### onSubmitForm
+
+`ChatBox` 컴포넌트는 DM과 Channel 두 컴포넌트에서 사용하여 재사용이 가능하다.
+그렇기 때문에, `ChatBox` 안에서 Submit 함수를 구현하는 것이 아니라, 부모 컴포넌트(DM && Channel)에서 구체적으로 함수를 구현한 후, 자식 컴포넌트에서 props로 받아와 각각의 컴포넌트 기능이 동작하도록 코드를 작성한다.
+
+### 3. eslint - react-app
+
+#### useEffect dependency 추천 기능
+
+- eslint 파일 내 아래와 같이 react-app을 추가하게 되면, React hook dependency에서 우리가 놓친 부분들을 추천해주는 기능이 작동한다. (누락시dependency에 노랑색으로 경고 표시)
+
+```javascript
+{
+  "extends":["plugin:prettier/recommend","react-app"]
+}
+```
+
+- 추가로, 다음 5가지 패키지도 함께 추가하여 더 견고하게 코딩을 할 수 있다.
+
+```bash
+npm i -D eslint-config-react-app eslint-plugin-flowtype eslint-plugin-import eslint-plugin-jsx-ally eslint-plugin-react
+```
 
 ## 에러 처리
 
@@ -391,7 +451,7 @@ api/users로 요청이 보내져야하는데, 계속 https://sleact.nodebird.com
 
   3. backend 및 frontend 재초기 세팅
 
-     - 여기서 db 연결 후,`npx sequelize db:seed:all` 를 했을 때,  다음과 같은 에러가 발생했다.
+     - 여기서 db 연결 후,`npx sequelize db:seed:all` 를 했을 때, 다음과 같은 에러가 발생했다.
 
        - 유추한건데, 마이그레이션 과정에서 에러가 발생한 것으로 판단하여 MYSQL workspace를 삭제 및 다시 세팅하였으나, 해결되지 않았다.
 
@@ -400,5 +460,5 @@ api/users로 요청이 보내져야하는데, 계속 https://sleact.nodebird.com
        ```
 
        - 결국, config.js에서 DB이름을 sleact -> sleact2로 변경후, 다시 create && sequelize 명령을 통해 세팅을 마쳤다.
-       - 재세팅한 코드와 기존 코드의 차이점을 찾아보니, baseURL을 설정하는 코드의 유무였다. 
+       - 재세팅한 코드와 기존 코드의 차이점을 찾아보니, baseURL을 설정하는 코드의 유무였다.
        - 이번을 계기로 api 요청 에러 관련 디버깅 시, URL 세팅 구간부터 차근차근 확인해야겠다 깨닫게 되었다.
