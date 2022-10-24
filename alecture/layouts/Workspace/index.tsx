@@ -3,6 +3,7 @@ import {
   Channels,
   Chats,
   Header,
+  LogOutButton,
   MenuScroll,
   ProfileImg,
   ProfileModal,
@@ -18,6 +19,7 @@ import useSWR from 'swr';
 import gravatar from 'gravatar';
 import loadable from '@loadable/component';
 import Menu from '@components/Menu';
+import { IUser } from '@typings/db';
 
 const Channel = loadable(() => import('@pages/Channel'));
 const DirectMessage = loadable(() => import('@pages/DirectMessage'));
@@ -25,7 +27,11 @@ const DirectMessage = loadable(() => import('@pages/DirectMessage'));
 const Workspace: FC = ({ children }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
-  const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher, {
+  const {
+    data: userData,
+    error,
+    mutate,
+  } = useSWR<IUser | false>('http://localhost:3095/api/users', fetcher, {
     dedupingInterval: 2000, // 2초
   });
 
@@ -35,7 +41,7 @@ const Workspace: FC = ({ children }) => {
         withCredentials: true,
       })
       .then(() => {
-        // 아래의 mutate는 api/users swr의 mutate이므로, 첫번째 인자 data의 상태를 바꿀 수 있다.
+        // 아래의 mutate는 api/users swr의 mutate이므로, 첫번째 인자 userData의 상태를 바꿀 수 있다.
         mutate(false, false);
       });
   }, []);
@@ -48,7 +54,7 @@ const Workspace: FC = ({ children }) => {
     setShowUserMenu((prev) => !prev);
   }, []);
 
-  if (!data) {
+  if (!userData) {
     return <Redirect to="/login" />;
   }
 
@@ -57,24 +63,25 @@ const Workspace: FC = ({ children }) => {
       <Header>
         <RightMenu>
           <span onClick={onClickUserProfile}>
-            <ProfileImg src={gravatar.url(data.nickname, { s: '28px', d: 'retro' })} alt={data.nickname} />
+            <ProfileImg src={gravatar.url(userData.nickname, { s: '28px', d: 'retro' })} alt={userData.nickname} />
             {showUserMenu && (
               <Menu style={{ right: 0, top: 38 }} show={showUserMenu} onCloseModal={onCloseUserProfile}>
                 <ProfileModal>
-                  <img src={gravatar.url(data.nickname, { s: '38px', d: 'retro' })} alt={data.nickname} />
+                  <img src={gravatar.url(userData.nickname, { s: '38px', d: 'retro' })} alt={userData.nickname} />
                   <div>
-                    <span id="profile-name">{data.nickname}</span>
+                    <span id="profile-name">{userData.nickname}</span>
                     <span id="profile-active">Active</span>
                   </div>
                 </ProfileModal>
+                <LogOutButton onClick={() => onLogout}> 로그아웃</LogOutButton>
               </Menu>
             )}
           </span>
         </RightMenu>
       </Header>
-      <button onClick={() => onLogout}>로그아웃</button>
+
       <WorkspaceWrapper>
-        <Workspaces>test</Workspaces>
+        <Workspaces>{userData.Workspaces.map((ws) => {})}</Workspaces>
         <Channels>
           <WorkspaceName>Sleact</WorkspaceName>
           <MenuScroll>menu scroll</MenuScroll>
@@ -86,7 +93,6 @@ const Workspace: FC = ({ children }) => {
           </Switch>
         </Chats>
       </WorkspaceWrapper>
-      {children}
     </div>
   );
 };
