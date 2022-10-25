@@ -315,7 +315,7 @@ swr에서 optimistic UI를 위해 **mutate**라는 메서드를 제공한다.
 ...
 // 여기서의 mutate는 해당 키를 가진 swr에서의 mutate이기 때문에, 하단의 mutate 코드 작성 시, 키는 따로 작성하지 않아도 된다.
 // mutate의 첫번째 인자는 데이터이고, 두번째 인자는 shouldrevalidate로 true일 시, 서버에 요청을 보내어 확인한다.
-const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher);
+const { data, error, mutate } = useSWR('/api/users', fetcher);
 ...
 .then((response) => {
           mutate(response.data, false);
@@ -327,7 +327,9 @@ const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetche
 
 ```typescript
 // dedupingInterval -> 지정한 시간 동안은 해당 api 요청을 수십번 해도 해당 시간동안은 한 번 밖에 안한다.
-const { data, error, mutate } = useSWR("http://localhost:3095/api/users", fetcher, { dedupingInterval: 100000 });
+const { data, error, mutate } = useSWR("/api/users", fetcher, {
+  dedupingInterval: 100000,
+});
 ```
 
 #### 전역 상태 관리자로서의 swr
@@ -372,6 +374,12 @@ const { data } = useSWR("hello");
 <Route path="workspace/workspace" />
 <Route path="/workspace/:workpspace"/>
 ```
+
+### <Challenge> CreateWorkspaceModal 만들기
+
+강의에서는 workspace 생성 모달을 따로 컴포넌트로 분리하지 않아서, 메뉴 모달과 채널 모달 컴포넌트 분리 방식을 학습 후,
+기존의 workspace 모달을 컴포넌트로 분리하였다.
+`CreateWorkspaceModal` 참고
 
 ## DM 보내기
 
