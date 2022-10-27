@@ -22,6 +22,7 @@ import Menu from '@components/Menu';
 import { IUser } from '@typings/db';
 import CreateChannelModal from '@components/CreateChannelModal';
 import CreateWorkspaceModal from '@components/CreateWorkspaceModal';
+import InviteWorkspaceModal from '@components/InviteWorkspaceModal';
 
 const Channel = loadable(() => import('@pages/Channel'));
 const DirectMessage = loadable(() => import('@pages/DirectMessage'));
@@ -111,6 +112,7 @@ const Workspace: FC = ({ children }) => {
         setShowCreateChannelModal={setShowCreateChannelModal}
         onCloseModal={onCloseModal}
       />
+      {/* <InviteWorkspaceModal /> */}
     </div>
   );
 };
