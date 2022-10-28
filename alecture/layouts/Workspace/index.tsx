@@ -101,6 +101,10 @@ const Workspace: FC = () => {
     setShowCreateChannelModal(true);
   }, []);
 
+  const onClickInviteWorkspace = useCallback(() => {
+    setShowInviteWorkspaceModal(true);
+  }, []);
+
   if (!userData) {
     return <Redirect to="/login" />;
   }
@@ -141,15 +145,20 @@ const Workspace: FC = () => {
         <Channels>
           <WorkspaceName onClick={toggleWorkspaceModal}>Sleact</WorkspaceName>
           <MenuScroll>
-            <Menu show={showWorkspaceModal} onCloseModal={toggleWorkspaceModal} style={{ top: 95, left: 80 }}>>
-              <WorkspaceModal></WorkspaceModal>
+            <Menu show={showWorkspaceModal} onCloseModal={toggleWorkspaceModal} style={{ top: 95, left: 80 }}>
+              <WorkspaceModal>
+                <h2>Sleact</h2>
+                <button onClick={onClickInviteWorkspace}>워크스페이스에 사용자 초대</button>
+                <button onClick={onClickAddChannel}>채널 만들기</button>
+                <button onClick={onLogout}>로그아웃</button>
+              </WorkspaceModal>
             </Menu>
           </MenuScroll>
         </Channels>
         <Chats>
           <Switch>
-            <Route path="/workspace/channel" component={Channel} />
-            <Route path="/workspace/direct-message" component={DirectMessage} />
+            <Route path="/workspace/:workspace/channel/:channel" component={Channel} />
+            <Route path="/workspace/:workspace/dm/:id" component={DirectMessage} />
           </Switch>
         </Chats>
       </WorkspaceWrapper>
@@ -163,7 +172,11 @@ const Workspace: FC = () => {
         setShowCreateChannelModal={setShowCreateChannelModal}
         onCloseModal={onCloseModal}
       />
-      {/* <InviteWorkspaceModal /> */}
+      <InviteWorkspaceModal
+        show={showInviteWorkspaceModal}
+        setShowInviteWorkspaceModal={setShowInviteWorkspaceModal}
+        onCloseModal={onCloseModal}
+      />
     </div>
   );
 };
