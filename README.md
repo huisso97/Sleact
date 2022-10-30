@@ -416,6 +416,231 @@ const { data } = useSWR("hello");
 npm i -D eslint-config-react-app eslint-plugin-flowtype eslint-plugin-import eslint-plugin-jsx-ally eslint-plugin-react
 ```
 
+## 실시간 채팅 및 프론트 기술 배우기
+
+### 1. socket.io 이벤트 연결하기
+
+#### 이벤트 리스너 연결 및 정리하기
+
+- socket 등 이벤트 리스너로 서버와 연결을 했으면, return문에서 해당 이벤트 리스너를 정리해야한다.
+- 그렇지 않으면, 이벤트 리스너가 서버에 2번 이상 연결이 된다.
+  ```typescript
+  useEffect(() => {
+    socket?.on("onlineList", (data: number[]) => {
+      setOnlineList(data);
+      return () => {
+        socket.off("onlineList");
+      };
+    });
+  }, []);
+  ```
+
+#### receiveBuffer & sendBuffer (socket.io의 제공 기능)
+
+socket에서 receiveBuffer 와 sendBuffer는 클라이언트와 서버의 연결이 끊겨있을 때, 보내고 받을 데이터들을 모아놓은 곳이다.
+
+- receiverBuffer는 서버에서 보낼 데이터들을 담아놓고,
+- sendBuffer는 클라이언트에서 보낼 데이터들을 담아놓아 다시 연결이 되었을 때, 해당 데이터들을 송수신한다.
+
+### 2. DM 내용 표시하기
+
+#### 관심사 분리시키기
+
+`ChatList`와 같은 재사용이 일어나는 컴포넌트는 보여줄 데이터들이 채팅과 디엠이기 때문에 각각의 데이터들을 `ChatList`에서 요청하여 받기 보다는, props를 통해서 처리하여 관심사를 분리시킨다.
+
+### 3. 커스텀 스크롤바
+
+#### 커스텀 스크롤바
+
+`react-custom-scrollbars`
+
+- 기본적으로 div 역할을 한다.
+- autoHide : 스크롤바 사라지는 속성
+- onScrollFrame : 스크롤 이벤트 속성
+- ref : 스크롤 위치 ref
+
+### 4. 멘션 기능 만들기
+
+#### 멘션 기능
+
+`react-mentions`
+
+```javascript
+<Mention
+  trigger="@"
+  data={this.props.users}
+  renderSuggestion={this.renderUserSuggestion}
+/>
+```
+
+- trigger : 멘션 기능을 트리거할 문자열
+- data : 트리거할 데이터 (id와 dsiplay를 key로 가지고 있는 객체)
+- renderSuggestion : 트리거된 데이터들을 보여줄 컴포넌트
+
+#### emotion 동적 스타일링
+
+- styled components 와 emotion은 변수 값에 따라 동적으로 스타일을 설정할 수 있다.
+  여기서 스타일 코드를 보면 백틱을 사용하여 표현하는데, 이 또한 함수 호출 방식 중 하나이다.
+
+```css
+export const CollapseButton = styled.button<{ collapse: boolean }>`
+  background: transparent;
+  border: none;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  margin-left: 10px;
+  cursor: pointer;
+  ${({ collapse }) =>
+    collapse &&
+    `
+    & i {
+      transform: none;
+    }
+  `};
+`;
+```
+
+##### 함수 호출 방법들
+
+```javascript
+function a();
+a();
+a.bind()();
+a.apply();
+a.call();
+a``; // tagged template literal
+// 안에 인자를 넣을 수 있다.
+a`${()=> `${()=> ``}}`;
+// 위와 같이 템플릿 리터럴 이므로, 리털럴 안에 또 새로운 템플릿 리터럴 인자를 넣을 수 있다.
+```
+
+66663333222254386795555512390-8767
+
+### 5. 정규표현식으로 문자열 변환하기
+
+`regexify-string`
+
+- `|d` : 숫자
+- `+` : 0개 이상 (최대한 많이 찾음)
+- `+?` : 최대한 조금 찾음
+- `?` : 0개나 1개
+- `.` : 모든 문자
+- `g` : 모두 찾기
+- `\n` : 띄어쓰기
+
+```javascript
+const result = regexifyString({
+  input: data.content, // 정규표현식을 적용할 데이터
+
+  pattern: /@\[.+?\]\(\d+?\)|\n]/g,
+  // pattern에 매칭되는 데이터를 처리하는 함수
+  decorator(match, index) {
+    const arr = match.match(/@\[.+?\]\(\d+?\)/)!;
+  },
+});
+```
+
+### 6. 날짜별로 묶어주기
+
+#### 불변성 유지하며 리스트 다루기
+
+- 최신 채팅 내용을 map함수로 돌렸을 때, 아래에 나올 수 있도록 하기 위해 `chatData`를 reverse 로 바꿔야한다.
+- 그러나 `chatData.reverse()`로 적용을 하면, 기존 배열이 바껴 immutable(불변성)이 깨지기 때문에,
+- 새 배열로 만들어 메서드를 적용하도록 구현하는 것이 좋다.
+
+##### 1번째 방식 : 빈 배열에 concat 함수를 사용하여 새 리스트 만들기
+
+```javascript
+[].concat(...chatData);
+```
+
+##### 2번째 방식 : 스프레드로 복사
+
+```javascript
+[...chatData];
+```
+
+### 7. 리버스 인피니트 스크롤
+
+#### forwardRef
+
+- scrollbar ref를 ref가 사용되는 컴포넌트(ChatList)가 아닌, 다른 컴포넌트(DirectMessage)에서 생성하여 넘겨받아 사용할 때, ChatList와 같은 컴포넌트를 forwardRef로 감싸 사용한다.
+- 이렇게 데이터를 이동시키는 이유는 DirectMessage에서 채팅을 쳤을 때 스크롤 위치가 이동되도록 하는 등, scrollbar ref 값을 조정하는 곳이 DirectMessage이하므로, 해당 데이터값을 핸들링하는 DirectMessage로 옮기는 것이다.
+- 그리고 실질적으로 ref에 따른 UI 렌더링은 ChatList에서 하므로, 해당 ref를 forwardRef로 받아 처리한다.
+
+#### useSWRInfinite
+
+##### 반환값
+
+- setSize : 데이터에서 가져와야할 페이지 수 설정 함수
+- getKey : 각 페이지의 swr 키를 얻기 위한 함수
+  - fetcher에 의해 해당 키의 값을 반환
+  - null 이 반환되면 페이지 요청을 하지 않는다.
+
+```javascript
+	// getKey의 경우, 기존 코드를 docs에 맞춰 리팩토링 진행
+    const getKey = (index, previousPageData) => {
+      if (previousPageData && !previousPageData.length) return null // 끝에 도달
+      return `/api/workspaces/${workspace}/dms/${id}/chats?perPage=20&page=${index + 1}` // SWR 키
+    };
+    const { data: chatData, mutate: mutateChat, revalidate, setSize } = useSWRInfinite<IDM[]>(
+      getKey,
+      fetcher,
+    );
+```
+
+#### optimistic UI (사용성 > 안정성)
+
+- 기존에는 post 요청에 대한 리턴값을 기반으로 scrollbar를 내리다보니, 2~3초 정도의 지연 시간이 걸렸다.
+- UX를 개선하기 위해, SWR의 `mutate`를 사용하여 Optimistic UI를 구현한다.
+
+##### 코드 설명
+
+- 먼저 UI에서는 scrollbar를 내리고
+- 이후 post 요청으로 서버에 데이터 갱신 처리
+
+```javascript
+const onSubmitForm = useCallback(
+  (e) => {
+    e.preventDefault();
+    if (chat?.trim() && chatData) {
+      const savedChat = chat;
+      // mutate 함수로 클라이언트 데이터 상태를 먼저 변경한다.
+      mutateChat((prevChatData) => {
+        prevChatData?.[0].unshift({
+          id: (chatData[0][0]?.id || 0) + 1,
+          content: savedChat,
+          SenderId: myData.id,
+          Sender: myData,
+          ReceiverId: userData.id,
+          Receiver: userData,
+          createdAt: new Date(),
+        });
+        return prevChatData;
+      }, false).then(() => {
+        setChat("");
+        scrollbarRef.current?.scrollToBottom();
+      });
+      // mutate 후, server에 post 요청을 보내어 데이터를 바꾼 후,
+      axios
+        .post(`/api/workspaces/${workspace}/dms/${id}/chats`, {
+          content: chat,
+        })
+        .then(() => {
+          // 성공적으로 서버와의 데이터 처리가 완료되면. revalidate 실행
+          revalidate();
+        })
+        .catch(console.error);
+    }
+  },
+  [chat, chatData, myData, userData, workspace, id]
+);
+```
+
 ## 에러 처리
 
 ### MYSQL 관련 에러
