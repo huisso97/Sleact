@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Container, Header, DragOver } from '@pages/DirectMessage/styles';
 import { useParams } from 'react-router';
 import useSWR, { useSWRInfinite } from 'swr';
@@ -8,6 +8,7 @@ import useSocket from '@hooks/useSocket';
 import { IDM } from '@typings/db';
 import Scrollbars from 'react-custom-scrollbars';
 import axios from 'axios';
+import makeSection from '@utils/makeSection';
 
 const DirectMessage = () => {
   const { workspace, id } = useParams<{ workspace: string; id: string }>();
@@ -59,6 +60,48 @@ const DirectMessage = () => {
     [chat, chatData, myData, userData, workspace, id],
   );
 
+  const onMessage = useCallback((data: IDM) => {
+    // id는 상대방 아이디
+    if (data.SenderId === Number(id) && myData.id !== Number(id)) {
+      mutateChat((chatData) => {
+        chatData?.[0].unshift(data);
+        return chatData;
+      }, false).then(() => {
+        if (scrollbarRef.current) {
+          if (
+            scrollbarRef.current.getScrollHeight() <
+            scrollbarRef.current.getClientHeight() + scrollbarRef.current.getScrollTop() + 150
+          ) {
+            console.log('scrollToBottom!', scrollbarRef.current?.getValues());
+            setTimeout(() => {
+              scrollbarRef.current?.scrollToBottom();
+            }, 50);
+          }
+        }
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    socket?.on('dm', onMessage);
+    return () => {
+      socket?.off('dm', onMessage);
+    };
+  }, [socket, onMessage]);
+
+  useEffect(() => {
+    if (chatData?.length === 1) {
+      setTimeout(() => {
+        scrollbarRef.current?.scrollToBottom();
+      }, 100);
+    }
+  }, []);
+
+  if (!userData || !myData) {
+    return null;
+  }
+
+  const chatSections = makeSection(chatData ? chatData.flat().reverse() : []);
   return (
     <Container>
       <Header>
