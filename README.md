@@ -641,6 +641,103 @@ const onSubmitForm = useCallback(
 );
 ```
 
+## 마무리하기
+
+### 채널 만들기
+
+#### extends
+
+- 제너릭 타입 `T`에 특정 타입으로 제한을 걸 때, extends 를 사용하여 제한한다.
+
+```typescript
+export const useInput = <T extends string | number>(
+  initialData: T
+): ReturnTypes => {
+  const [value, setValue] = useState(initialData);
+  const handler = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    setValue(e.target.value as unknown as T);
+  }, []);
+
+  return [value, handler, setValue];
+};
+```
+
+### 타입 점검하기(타입 가드)(feat.revalidate)
+
+#### 타입 가드
+
+타입 가드 : 타입스크립트가 if문을 통해 타입을 더 자세하게 추론해주는 기능
+
+```typescript
+function a(b: number | number[]) {
+  if (typeof b === "number") {
+    b.toFixed();
+  }
+  if (Array.isArray(b)) {
+    b.forEach(() => {});
+  }
+  b.forEach(() => {}); // Type Error
+}
+```
+
+#### mutate 이후, revalidate를 쓰는 이유
+
+서버에서 최종 데이터 처리한 값을 기준으로 클라이언트 state를 재갱신하기 위해 사용한다.
+
+예를 들어, optimistic UI로 client에서 상태값을 바꾼 후 서버에 요청을 보냈을 때, 유저 네트워크 환경에 따라 서버 순서와 optimistic UI 순서가 다른 경우가 발생한다.(예 : 채팅 보낸순서)
+이때, revalidate를 통해 서버 순서로 state를 재갱신한다.
+
+### 배포 준비하기
+
+`webpack-bundle-analyzer` : 소스코드를 압축하는 패키지
+
+- html로 나오는(analyzerMode가 static일 때) 번들 파일들 중에서 크기가 크거나 성능에 영향이 미칠 패키지들을 선별하여 코드 스플리팅 및 트리 쉐이킹을 통해 최적화한다.
+- `wepkac.config.js` 에 아래의 코드를 추가한다.
+
+```javascript
+// wepack.config.js
+...
+// 개발모드
+if (isDevelopment && config.plugins) {
+  config.plugins.push(new webpack.HotModuleReplacementPlugin());
+  config.plugins.push(new ReactRefreshWebpackPlugin());
+  config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server', openAnalyzer: true }));
+}
+// 배포모드
+if (!isDevelopment && config.plugins) {
+  config.plugins.push(new webpack.LoaderOptionsPlugin({ minimize: true }));
+  config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'static' }));
+}
+
+export default config;
+```
+
+### 이미지 드래그 업로드하기
+
+`onDragOver` : 이미지를 눌러서 드래그하는 동안 발생하는 이벤트
+`onDrop` : 이미지를 놓았을 때 발생하는 이벤트
+
+- 위의 함수 로직들은 MDN문서에 정리되어있음
+  DragEvent MDN 문서 : https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer/items
+  FormData 제로초님 블로그 : https://www.zerocho.com/category/HTML&DOM/post/59465380f2c7fb0018a1a263
+
+### 안 읽은 메시지 개수 표시하기
+
+- workspace 및 direct message 에서 특정한 동작이 이루어졌을 때, 해당 시점을 localStorage에 저장한다.
+- 그리고 아래와 같이, 마지막으로 저장된 시점을 가져와 서버에 해당 시점 이후의 메세지 갯수를 받는다.
+
+```typescript
+const date = localStorage.getItem(`${workspace}-${channel.name}`) || 0;
+const { data: count, mutate } = useSWR<number>(
+  userData
+    ? `/api/workspaces/${workspace}/channels/${channel.name}/unreads?after=${date}`
+    : null,
+  fetcher
+);
+```
+
+### SWR Devtools 소개
+
 ## 에러 처리
 
 ### MYSQL 관련 에러
