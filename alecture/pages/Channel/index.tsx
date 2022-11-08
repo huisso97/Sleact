@@ -55,6 +55,8 @@ const Channel = () => {
             content: chat,
           })
           .then(() => {
+            // 서버에서 최종 데이터 처리한 값을 기준으로 클라이언트 state를 재갱신하기 위한 revalidate
+            // 예를 들어, optimistic UI로 client에서 상태값을 미리 바꾼 후, 서버에 요청을 보냈을 때, 서버 순서와 optimistic UI 순서가 다를때(채팅 보낸순서), revalidate를 통해 서버 순서로 갱신한다.
             revalidate();
           })
           .catch(console.error);
