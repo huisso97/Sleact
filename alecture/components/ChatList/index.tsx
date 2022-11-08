@@ -1,32 +1,32 @@
 import { IChat, IDM } from '@typings/db';
-import React, { MutableRefObject, useCallback } from 'react';
+import React, { FC, MutableRefObject, RefObject, useCallback } from 'react';
 import { forwardRef } from 'react';
 import Scrollbars from 'react-custom-scrollbars';
 import { ChatZone, Section, StickyHeader } from '@components/ChatList/styles';
+import Chat from '@components/Chat';
 interface Props {
+  scrollbarRef: RefObject<Scrollbars>;
   chatSections: { [key: string]: (IDM | IChat)[] };
   setSize: (f: (size: number) => number) => Promise<(IDM | IChat)[][] | undefined>;
-  isReachingEnd: boolean;
+  isReachingEnd?: boolean;
+  isEmpty: boolean;
 }
 
-const ChatList = forwardRef<Scrollbars, Props>(({ chatSections, setSize, isReachingEnd }, scrollRef) => {
+const ChatList: FC<Props> = ({ chatSections, setSize, isEmpty, isReachingEnd, scrollbarRef }) => {
   const onScroll = useCallback(
     (values) => {
-      if (values.scrollTop === 0 && !isReachingEnd) {
+      if (values.scrollTop === 0 && !isReachingEnd && !isEmpty) {
         setSize((prevSize) => prevSize + 1).then(() => {
-          const current = (scrollRef as MutableRefObject<Scrollbars>)?.current;
-          if (current) {
-            current.scrollTop(current.getScrollHeight() - values.scrollHeight);
-          }
+          scrollbarRef.current?.scrollTop(scrollbarRef.current?.getScrollHeight() - values.scrollHeight);
         });
       }
     },
-    [scrollRef, isReachingEnd, setSize],
+    [scrollbarRef, isReachingEnd, setSize, isEmpty],
   );
 
   return (
     <ChatZone>
-      <Scrollbars>
+      <Scrollbars autoHide ref={scrollbarRef} onScrollFrame={onScroll}>
         {Object.entries(chatSections).map(([date, chats]) => {
           return (
             <Section className={`section-${date}`} key={date}>
@@ -34,7 +34,7 @@ const ChatList = forwardRef<Scrollbars, Props>(({ chatSections, setSize, isReach
                 <button>{date}</button>
               </StickyHeader>
               {chats.map((chat) => {
-                // <Chat />
+                <Chat key={chat.id} data={chat} />;
               })}
             </Section>
           );
@@ -42,6 +42,6 @@ const ChatList = forwardRef<Scrollbars, Props>(({ chatSections, setSize, isReach
       </Scrollbars>
     </ChatZone>
   );
-});
+};
 
 export default ChatList;
