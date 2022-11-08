@@ -32,7 +32,7 @@ import useSocket from '@hooks/useSocket';
 const Channel = loadable(() => import('@pages/Channel'));
 const DirectMessage = loadable(() => import('@pages/DirectMessage'));
 
-const Workspace: FC = () => {
+const Workspace = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showCreateChannelModal, setShowCreateChannelModal] = useState(false);
   const [showCreateWorkspaceModal, setShowCreateWorkspaceModal] = useState(false);
