@@ -1,3 +1,4 @@
+import EachDM from '@components/EachDM';
 import useSocket from '@hooks/useSocket';
 import { IUser, IUserWithOnline } from '@typings/db';
 import fetcher from '@utils/fetcher';
@@ -21,6 +22,7 @@ const DMList: FC = () => {
   }, []);
 
   useEffect(() => {
+    // DMList workspace 변경됨
     setOnlineList([]);
   }, [workspace]);
 
@@ -31,7 +33,7 @@ const DMList: FC = () => {
         socket.off('onlineList');
       };
     });
-  }, []);
+  }, [socket]);
   return (
     <>
       <h2>

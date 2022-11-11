@@ -18,6 +18,7 @@ import {
 import axios from 'axios';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, Redirect, Route, Switch, useParams } from 'react-router-dom';
+
 import useSWR from 'swr';
 import gravatar from 'gravatar';
 import loadable from '@loadable/component';
@@ -31,6 +32,7 @@ import useSocket from '@hooks/useSocket';
 import { toast, ToastContainer } from 'react-toastify';
 import DMList from '@components/DMList';
 import ChannelList from '@components/ChannelList';
+import InviteChannelModal from '@components/InviteChannelModal';
 
 const Channel = loadable(() => import('@pages/Channel'));
 const DirectMessage = loadable(() => import('@pages/DirectMessage'));
@@ -46,6 +48,7 @@ const Workspace = () => {
   const [newUrl, onChangeNewUrl, setNewUrl] = useInput('');
 
   const { workspace } = useParams<{ workspace: string }>();
+
   const { data: userData, mutate } = useSWR<IUser | false>('/api/users', fetcher, {
     dedupingInterval: 2000, // 2초
   });
@@ -55,6 +58,7 @@ const Workspace = () => {
 
   useEffect(() => {
     if (channelData && userData && socket) {
+      // 로그인
       socket.emit('login', { id: userData.id, channels: channelData.map((v) => v.id) });
     }
   }, [socket, channelData, userData]);
@@ -212,6 +216,11 @@ const Workspace = () => {
         show={showInviteWorkspaceModal}
         setShowInviteWorkspaceModal={setShowInviteWorkspaceModal}
         onCloseModal={onCloseModal}
+      />
+      <InviteChannelModal
+        show={showInviteChannelModal}
+        onCloseModal={onCloseModal}
+        setShowInviteChannelModal={setShowInviteChannelModal}
       />
       <ToastContainer position="bottom-center" />
     </div>

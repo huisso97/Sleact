@@ -15,8 +15,7 @@ interface Props {
 }
 
 const CreateChannelModal: FC<Props> = ({ show, onCloseModal, setShowCreateChannelModal }) => {
-  const params = useParams<{ workspace?: string }>();
-  const { workspace } = params;
+  const { workspace } = useParams<{ workspace?: string }>();
   const [newChannel, onChangeNewChannel, setNewChannel] = useInput('');
   const { data: userData } = useSWR<IUser | false>('/api/users', fetcher);
   // swr이 userData 유무에 따라서 요청 결정

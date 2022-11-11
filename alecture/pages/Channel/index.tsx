@@ -1,10 +1,10 @@
 import { useInput } from '@hooks/useInput';
 import useSocket from '@hooks/useSocket';
 import Workspace from '@layouts/Workspace';
-import { IChannel, IChat } from '@typings/db';
+import { IChannel, IChat, IUser } from '@typings/db';
 import fetcher from '@utils/fetcher';
 import axios from 'axios';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Scrollbars from 'react-custom-scrollbars';
 import { useParams } from 'react-router';
 import useSWR, { useSWRInfinite } from 'swr';
@@ -23,16 +23,21 @@ const Channel = () => {
     (index) => `/api/workspaces/${workspace}/channels/${channel}/chats?perPage=20&page=${index + 1}`,
     fetcher,
   );
+  const { data: channelMembersData } = useSWR<IUser[]>(
+    myData ? `/api/workspaces/${workspace}/channels/${channel}/members` : null,
+    fetcher,
+  );
   const [socket] = useSocket(workspace);
   const isEmpty = chatData?.[0]?.length === 0;
   const isReachingEnd = isEmpty || (chatData && chatData[chatData.length - 1]?.length < 20) || false;
   const scrollbarRef = useRef<Scrollbars>(null);
   const [showInviteChannelModal, setShowInviteChannelModal] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
 
   const onSubmitForm = useCallback(
     (e) => {
       e.preventDefault();
-      console.log(chat);
+      // optimistic UI
       if (chat?.trim() && chatData && channelData) {
         const savedChat = chat;
         mutateChat((prevChatData) => {
@@ -65,6 +70,37 @@ const Channel = () => {
     [chat, chatData, myData, channelData, workspace, channel],
   );
 
+  const onMessage = useCallback(
+    (data: IChat) => {
+      // id는 상대방 아이디
+      if (data.Channel.name === channel && (data.content.startsWith('uploads\\') || data.UserId !== myData?.id)) {
+        mutateChat((chatData) => {
+          chatData?.[0].unshift(data);
+          return chatData;
+        }, false).then(() => {
+          if (scrollbarRef.current) {
+            if (
+              scrollbarRef.current.getScrollHeight() <
+              scrollbarRef.current.getClientHeight() + scrollbarRef.current.getScrollTop() + 150
+            ) {
+              console.log('scrollToBottom!', scrollbarRef.current?.getValues());
+              setTimeout(() => {
+                scrollbarRef.current?.scrollToBottom();
+              }, 50);
+            }
+          }
+        });
+      }
+    },
+    [channel, myData],
+  );
+
+  useEffect(() => {
+    socket?.on('message', onMessage);
+    return () => {
+      socket?.off('message', onMessage);
+    };
+  }, [socket, onMessage]);
   return <div>Channel</div>;
 };
 
